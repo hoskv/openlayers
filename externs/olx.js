@@ -101,6 +101,22 @@ olx.LogoOptions.prototype.src;
  */
 olx.GraticuleOptions;
 
+/**
+ * The extent of the graticule in EPSG4326.  Use this in conjunction
+ * with intervals in order to specify specific lines of longitude and latitude
+ * to use. 
+ * @type {Array.<number>|undefined}
+ * @api
+ */
+olx.GraticuleOptions.prototype.extent;
+
+/**
+ * The intervals to use in degrees for lonlat spacing.  Default intervals are 
+ * [90, 45, 30, 20, 10, 5, 2, 1, 0.5, 0.2, 0.1, 0.05, 0.01, 0.005, 0.002, 0.001]
+ * @type {Array.<number>|undefined}
+ * @api
+ */
+olx.GraticuleOptions.prototype.intervals;
 
 /**
  * Reference to an `ol.Map` object.

@@ -32,6 +32,13 @@ ol.Graticule = function(opt_options) {
   this.projection_ = null;
 
  /**
+  * @type {Array.<number>}
+  * @private
+  */
+  this.extent_ = options.extent !== undefined ?
+         options.extent : null;
+
+ /**
   * @type {number}
   * @private
   */
@@ -128,6 +135,13 @@ ol.Graticule = function(opt_options) {
   * @private
   */
   this.projectionCenterLonLat_ = null;
+
+ /**
+  * @type {Array.<number>}
+  * @private
+  */
+  this.intervals_ = options.intervals !== undefined ?
+    options.intervals : ol.Graticule.intervals_;
 
   this.setMap(options.map !== undefined ? options.map : null);
 };
@@ -229,7 +243,7 @@ ol.Graticule.prototype.createGraticule_ = function(extent, center, resolution, s
 
   // Create meridians
 
-  centerLon = Math.floor(centerLon / interval) * interval;
+  centerLon = this.minLon_ + (Math.floor((centerLon - this.minLon_) / interval) * interval);
   lon = ol.math.clamp(centerLon, this.minLon_, this.maxLon_);
 
   idx = this.addMeridian_(lon, minLat, maxLat, squaredTolerance, extent, 0);
@@ -252,7 +266,7 @@ ol.Graticule.prototype.createGraticule_ = function(extent, center, resolution, s
 
   // Create parallels
 
-  centerLat = Math.floor(centerLat / interval) * interval;
+  centerLat = this.minLat_ + (Math.floor((centerLat - this.minLat_) / interval) * interval);
   lat = ol.math.clamp(centerLat, this.minLat_, this.maxLat_);
 
   idx = this.addParallel_(lat, minLon, maxLon, squaredTolerance, extent, 0);
@@ -291,8 +305,8 @@ ol.Graticule.prototype.getInterval_ = function(resolution) {
   var p1 = [];
   /** @type {Array.<number>} **/
   var p2 = [];
-  for (i = 0, ii = ol.Graticule.intervals_.length; i < ii; ++i) {
-    delta = ol.Graticule.intervals_[i] / 2;
+  for (i = 0, ii = this.intervals_.length; i < ii; ++i) {
+    delta = this.intervals_[i] / 2;
     p1[0] = centerLon - delta;
     p1[1] = centerLat - delta;
     p2[0] = centerLon + delta;
@@ -303,7 +317,7 @@ ol.Graticule.prototype.getInterval_ = function(resolution) {
     if (dist <= target) {
       break;
     }
-    interval = ol.Graticule.intervals_[i];
+    interval = this.intervals_[i];
   }
   return interval;
 };
@@ -441,11 +455,19 @@ ol.Graticule.prototype.handlePostCompose_ = function(e) {
  */
 ol.Graticule.prototype.updateProjectionInfo_ = function(projection) {
   var epsg4326Projection = ol.proj.get('EPSG:4326');
-
-  var extent = projection.getExtent();
-  var worldExtent = projection.getWorldExtent();
-  var worldExtentP = ol.proj.transformExtent(worldExtent,
-     epsg4326Projection, projection);
+  var extent, worldExtent, worldExtentP;
+  //  this.extent is epsg 4326
+  if (this.extent_ !== null) {
+    worldExtent = this.extent_;
+    worldExtentP = ol.proj.transformExtent(worldExtent,
+        epsg4326Projection, projection);
+    extent = worldExtentP;
+  } else {
+    extent = projection.getExtent();
+    worldExtent = projection.getWorldExtent();
+    worldExtentP = ol.proj.transformExtent(worldExtent,
+        epsg4326Projection, projection);
+  }
 
   var maxLat = worldExtent[3];
   var maxLon = worldExtent[2];
@@ -469,13 +491,13 @@ ol.Graticule.prototype.updateProjectionInfo_ = function(projection) {
 
 
   this.fromLonLatTransform_ = ol.proj.getTransform(
-     epsg4326Projection, projection);
+    epsg4326Projection, projection);
 
   this.toLonLatTransform_ = ol.proj.getTransform(
-     projection, epsg4326Projection);
+    projection, epsg4326Projection);
 
   this.projectionCenterLonLat_ = this.toLonLatTransform_(
-     ol.extent.getCenter(extent));
+    ol.extent.getCenter(extent));
 
   this.projection_ = projection;
 };
@@ -490,12 +512,12 @@ ol.Graticule.prototype.updateProjectionInfo_ = function(projection) {
 ol.Graticule.prototype.setMap = function(map) {
   if (this.map_) {
     this.map_.un(ol.render.EventType.POSTCOMPOSE,
-        this.handlePostCompose_, this);
+      this.handlePostCompose_, this);
     this.map_.render();
   }
   if (map) {
     map.on(ol.render.EventType.POSTCOMPOSE,
-        this.handlePostCompose_, this);
+      this.handlePostCompose_, this);
     map.render();
   }
   this.map_ = map;
