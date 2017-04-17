@@ -9,6 +9,21 @@ var olx;
 
 
 /**
+ * @typedef {{unique: (boolean|undefined)}}
+ */
+olx.CollectionOptions;
+
+
+/**
+ * Disallow the same item from being added to the collection twice.  Default is
+ * false.
+ * @type {boolean|undefined}
+ * @api
+ */
+olx.CollectionOptions.prototype.unique;
+
+
+/**
  * @typedef {{html: string,
  *     tileRanges: (Object.<string, Array.<ol.TileRange>>|undefined)}}
  */
@@ -2301,7 +2316,8 @@ olx.format.WFSWriteGetFeatureOptions.prototype.resultType;
  *     srsName: (string|undefined),
  *     handle: (string|undefined),
  *     nativeElements: Array.<Object>,
- *     gmlOptions: (olx.format.GMLOptions|undefined)}}
+ *     gmlOptions: (olx.format.GMLOptions|undefined),
+ *     version: (string|undefined)}}
  */
 olx.format.WFSWriteTransactionOptions;
 
@@ -2364,6 +2380,15 @@ olx.format.WFSWriteTransactionOptions.prototype.gmlOptions;
 
 
 /**
+ * WFS version to use for the transaction. Can be either `1.0.0` or `1.1.0`.
+ * Default is `1.1.0`.
+ * @type {string|undefined}
+ * @api
+ */
+olx.format.WFSWriteTransactionOptions.prototype.version;
+
+
+/**
  * @typedef {{splitCollection: (boolean|undefined)}}
  */
 olx.format.WKTOptions;
@@ -2404,7 +2429,9 @@ olx.interaction;
 
 /**
  * Interactions for the map. Default is `true` for all options.
- * @typedef {{altShiftDragRotate: (boolean|undefined),
+ * @typedef {{
+ *     altShiftDragRotate: (boolean|undefined),
+ *     constrainResolution: (boolean|undefined),
  *     doubleClickZoom: (boolean|undefined),
  *     keyboard: (boolean|undefined),
  *     mouseWheelZoom: (boolean|undefined),
@@ -2413,7 +2440,8 @@ olx.interaction;
  *     pinchRotate: (boolean|undefined),
  *     pinchZoom: (boolean|undefined),
  *     zoomDelta: (number|undefined),
- *     zoomDuration: (number|undefined)}}
+ *     zoomDuration: (number|undefined)
+ * }}
  */
 olx.interaction.DefaultsOptions;
 
@@ -2424,6 +2452,15 @@ olx.interaction.DefaultsOptions;
  * @api
  */
 olx.interaction.DefaultsOptions.prototype.altShiftDragRotate;
+
+
+/**
+ * Zoom to the closest integer zoom level after the wheel/trackpad or
+ * pinch gesture ends. Default is `false`.
+ * @type {boolean|undefined}
+ * @api
+ */
+olx.interaction.DefaultsOptions.prototype.constrainResolution;
 
 
 /**
@@ -2556,6 +2593,7 @@ olx.interaction.DragAndDropOptions.prototype.target;
 /**
  * @typedef {{className: (string|undefined),
  *     condition: (ol.EventsConditionType|undefined),
+ *     minArea: (number|undefined),
  *     boxEndCondition: (ol.DragBoxEndConditionType|undefined)}}
  */
 olx.interaction.DragBoxOptions;
@@ -2580,18 +2618,18 @@ olx.interaction.DragBoxOptions.prototype.condition;
 
 
 /**
+ * The minimum area of the box in pixel, this value is used by the default
+ * `boxEndCondition` function. Default is `64`.
+ * @type {number|undefined}
+ * @api
+ */
+olx.interaction.DragBoxOptions.prototype.minArea;
+
+
+/**
  * A function that takes a {@link ol.MapBrowserEvent} and two
- * {@link ol.Pixel}s to indicate whether a boxend event should be fired.
- * Default is:
- * ```js
- * function(mapBrowserEvent,
- *     startPixel, endPixel) {
- *   var width = endPixel[0] - startPixel[0];
- *   var height = endPixel[1] - startPixel[1];
- *   return width * width + height * height >=
- *     ol.DRAG_BOX_HYSTERESIS_PIXELS_SQUARED;
- * }
- * ```
+ * {@link ol.Pixel}s to indicate whether a `boxend` event should be fired.
+ * Default is `true` if the area of the box is bigger than the `minArea` option.
  * @type {ol.DragBoxEndConditionType|undefined}
  * @api
  */
@@ -3092,7 +3130,8 @@ olx.interaction.ModifyOptions.prototype.wrapX;
 
 
 /**
- * @typedef {{duration: (number|undefined),
+ * @typedef {{constrainResolution: (boolean|undefined),
+ *     duration: (number|undefined),
  *     timeout: (number|undefined),
  *     useAnchor: (boolean|undefined)}}
  */
@@ -3113,6 +3152,16 @@ olx.interaction.MouseWheelZoomOptions.prototype.duration;
  * @api
  */
 olx.interaction.MouseWheelZoomOptions.prototype.timeout;
+
+
+/**
+ * When using a trackpad or magic mouse, zoom to the closest integer zoom level
+ * after the scroll gesture ends.
+ * Default is `false`.
+ * @type {boolean|undefined}
+ * @api
+ */
+olx.interaction.MouseWheelZoomOptions.prototype.constrainResolution;
 
 
 /**
@@ -3149,7 +3198,10 @@ olx.interaction.PinchRotateOptions.prototype.threshold;
 
 
 /**
- * @typedef {{duration: (number|undefined)}}
+ * @typedef {{
+ *     duration: (number|undefined),
+ *     constrainResolution: (boolean|undefined)
+ * }}
  */
 olx.interaction.PinchZoomOptions;
 
@@ -3897,7 +3949,7 @@ olx.layer.TileOptions.prototype.useInterimTilesOnError;
 
 
 /**
- * @typedef {{renderOrder: (function(ol.Feature, ol.Feature):number|null|undefined),
+ * @typedef {{renderOrder: (ol.RenderOrderFunction|null|undefined),
  *     minResolution: (number|undefined),
  *     maxResolution: (number|undefined),
  *     opacity: (number|undefined),
@@ -3916,7 +3968,7 @@ olx.layer.VectorOptions;
  * Render order. Function to be used when sorting features before rendering. By
  * default features are drawn in the order that they are created. Use `null` to
  * avoid the sort, but get an undefined draw order.
- * @type {function(ol.Feature, ol.Feature):number|null|undefined}
+ * @type {ol.RenderOrderFunction|null|undefined}
  * @api
  */
 olx.layer.VectorOptions.prototype.renderOrder;
@@ -4031,7 +4083,7 @@ olx.layer.VectorOptions.prototype.visible;
  *     preload: (number|undefined),
  *     renderBuffer: (number|undefined),
  *     renderMode: (ol.layer.VectorTileRenderType|string|undefined),
- *     renderOrder: (function(ol.Feature, ol.Feature):number|undefined),
+ *     renderOrder: (ol.RenderOrderFunction|undefined),
  *     source: (ol.source.VectorTile|undefined),
  *     style: (ol.style.Style|Array.<ol.style.Style>|ol.StyleFunction|undefined),
  *     updateWhileAnimating: (boolean|undefined),
@@ -4074,7 +4126,7 @@ olx.layer.VectorTileOptions.prototype.renderMode;
 /**
  * Render order. Function to be used when sorting features before rendering. By
  * default features are drawn in the order that they are created.
- * @type {function(ol.Feature, ol.Feature):number|undefined}
+ * @type {ol.RenderOrderFunction|undefined}
  * @api
  */
 olx.layer.VectorTileOptions.prototype.renderOrder;
@@ -7109,7 +7161,7 @@ olx.style.RegularShapeOptions.prototype.radius;
 
 
 /**
- * Inner radius of a star.
+ * Outer radius of a star.
  * @type {number|undefined}
  * @api
  */
@@ -7117,7 +7169,7 @@ olx.style.RegularShapeOptions.prototype.radius1;
 
 
 /**
- * Outer radius of a star.
+ * Inner radius of a star.
  * @type {number|undefined}
  * @api
  */
